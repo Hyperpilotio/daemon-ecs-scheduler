@@ -1,4 +1,4 @@
-package: github.com/hyperpilot/daemon-ecs-scheduler
+package: github.com/hyperpilotio/daemon-ecs-scheduler
 import:
 - package: github.com/aws/aws-sdk-go
   subpackages:
