@@ -8,4 +8,4 @@ WORKDIR /go/src/github.com/hyperpilotio/daemon-ecs-scheduler
 
 RUN glide install && go build
 
-CMD /go/src/github.com/hyperpilotio/daemon-ecs-scheduler/daemon-ecs-scheduler
+ENTRYPOINT /go/src/github.com/hyperpilotio/daemon-ecs-scheduler/daemon-ecs-scheduler
