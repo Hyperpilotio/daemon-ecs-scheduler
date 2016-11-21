@@ -1,0 +1,14 @@
+package: github.com/hyperpilot/daemon-ecs-scheduler
+import:
+- package: github.com/aws/aws-sdk-go
+  subpackages:
+  - aws
+  - aws/awserr
+  - service/ecs
+- package: github.com/jinzhu/gorm
+- package: github.com/mattn/go-sqlite3
+- package: github.com/inconshreveable/log15
+- package: github.com/mattn/go-colorable
+- package: github.com/Wen777/ecs_state
+- package: github.com/urfave/cli
+  version: ~1.19.0
