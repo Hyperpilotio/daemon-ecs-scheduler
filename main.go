@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -14,41 +15,59 @@ import (
 )
 
 // StartTask on AWS ECS Cluster
-func StartTask(CLUSTER string, TASK string) error {
+// cluster the name of cluster
+// taskArn the ARN of task or the name of task
+func StartTask(cluster string, taskArn string) error {
 
 	// List cluster info
 	sess, _ := session.NewSession(&aws.Config{Region: aws.String("us-west-1")})
 	client := ecs.New(sess)
 
-	state := ecs_state.Initialize(CLUSTER, client)
+	state := ecs_state.Initialize(cluster, client)
 	state.RefreshClusterState()
 	state.RefreshContainerInstanceState()
 	state.RefreshTaskState()
-	fmt.Printf("Found Cluster: %+v\n\n", len(state.FindClusterByName(CLUSTER).ContainerInstances))
+
+	clusterInstance := state.FindClusterByName(cluster)
+
+	if clusterInstance.ARN == "" {
+		return errors.New("cluster doesn't exist")
+	}
+
+	if clusterInstance.Status != "ACTIVE" {
+		return errors.New("the cluster is not active")
+	}
+
+	instancesList := clusterInstance.ContainerInstances
+	fmt.Printf("Found %+v container instances in the cluster: \n\n", len(instancesList))
 
 	// TODO Register task definitions
-	ec2Arr := state.FindClusterByName(CLUSTER).ContainerInstances
 
-	var arrOfMissing []*string
-	for _, v := range ec2Arr {
-		flag := 0
+	// chosenInstances stores those instances who doesn't have the specific task
+	var chosenInstances []*string
+	for _, v := range instancesList {
+		taskExists := false
 		for _, task := range v.Tasks {
-			if strings.Contains(task.TaskDefinitionARN, TASK) {
-				flag = 1
+			if strings.Contains(task.TaskDefinitionARN, taskArn) {
+				taskExists = true
 				break
 			}
 		}
-		if flag == 0 {
-			arrOfMissing = append(arrOfMissing, aws.String(v.ARN))
+		if !taskExists {
+			chosenInstances = append(chosenInstances, aws.String(v.ARN))
 		}
 	}
 
-	fmt.Printf("How many containers lack the specific task %+v\n\n", len(arrOfMissing))
+	if len(chosenInstances) == 0 {
+		return nil
+	}
+
+	fmt.Printf("How many instances lack the specific task %+v\n\n", len(chosenInstances))
 
 	params := &ecs.StartTaskInput{
-		ContainerInstances: arrOfMissing,
-		TaskDefinition:     aws.String(TASK),
-		Cluster:            aws.String(CLUSTER),
+		ContainerInstances: chosenInstances,
+		TaskDefinition:     aws.String(taskArn),
+		Cluster:            aws.String(cluster),
 		StartedBy:          aws.String("hyperpilot-pen"),
 	}
 
@@ -69,7 +88,7 @@ func main() {
 	var CLUSTER string
 	var TaskDef []string
 	app := cli.NewApp()
-	app.Name = "hyperpen"
+	app.Name = "daemon-ecs-scheduler"
 	app.Usage = "A customized scheduler by hyperpilot for AWS ECS"
 
 	app.Flags = []cli.Flag{
