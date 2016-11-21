@@ -1,0 +1,66 @@
+hash: 71818d75a99922343fc73d174b055a9d9d8164c5d502459d1d144738864e81d1
+updated: 2016-11-21T12:12:17.285957413+08:00
+imports:
+- name: github.com/aws/aws-sdk-go
+  version: 898c81ba64b9a467379d35e3fabad133beae0ee4
+  subpackages:
+  - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/endpoints
+  - private/protocol
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/xml/xmlutil
+  - private/waiter
+  - service/ecs
+  - service/ecs/ecsiface
+  - service/sts
+- name: github.com/go-ini/ini
+  version: 6e4869b434bd001f6983749881c7ead3545887d8
+- name: github.com/go-stack/stack
+  version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
+- name: github.com/inconshreveable/log15
+  version: 46a701a619de90c65a78c04d1a58bf02585e9701
+  subpackages:
+  - term
+- name: github.com/jinzhu/gorm
+  version: 066abcef408f2522f0a89952e44ab17eac176ed0
+- name: github.com/jinzhu/inflection
+  version: 74387dc39a75e970e7a3ae6a3386b5bd2e5c5cff
+- name: github.com/jmespath/go-jmespath
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- name: github.com/mattn/go-colorable
+  version: d228849504861217f796da67fae4f6e347643f15
+- name: github.com/mattn/go-isatty
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/mattn/go-sqlite3
+  version: fba66eb11643069e747022997e9be3b502b2c6fb
+- name: github.com/urfave/cli
+  version: a8fc36b690712e61212d8cb9450eabf2be359fca
+- name: github.com/Wen777/ecs_state
+  version: c6b3d7fd30ef3716ca1ac7cf8e40d5cce09ee2cb
+- name: golang.org/x/net
+  version: 4971afdc2f162e82d185353533d3cf16188a9f4e
+  subpackages:
+  - context
+- name: golang.org/x/sys
+  version: b699b7032584f0953262cb2788a0ca19bb494703
+  subpackages:
+  - unix
+testImports: []
