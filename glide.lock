@@ -1,5 +1,5 @@
-hash: 71818d75a99922343fc73d174b055a9d9d8164c5d502459d1d144738864e81d1
-updated: 2016-11-21T12:12:17.285957413+08:00
+hash: d6c4474791f39e78b8afc984ccf12a0afc03032da348dbc717d7816c8c2fa8e0
+updated: 2016-11-22T17:33:42.658607221+08:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 898c81ba64b9a467379d35e3fabad133beae0ee4
@@ -35,6 +35,8 @@ imports:
   version: 6e4869b434bd001f6983749881c7ead3545887d8
 - name: github.com/go-stack/stack
   version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/inconshreveable/log15
   version: 46a701a619de90c65a78c04d1a58bf02585e9701
   subpackages:
@@ -52,7 +54,7 @@ imports:
 - name: github.com/mattn/go-sqlite3
   version: fba66eb11643069e747022997e9be3b502b2c6fb
 - name: github.com/urfave/cli
-  version: a8fc36b690712e61212d8cb9450eabf2be359fca
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: github.com/Wen777/ecs_state
   version: c6b3d7fd30ef3716ca1ac7cf8e40d5cce09ee2cb
 - name: golang.org/x/net
