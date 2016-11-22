@@ -2,13 +2,14 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
+
+	"github.com/golang/glog"
 
 	ecs_state "github.com/Wen777/ecs_state"
 	cli "github.com/urfave/cli"
@@ -31,15 +32,17 @@ func StartTask(cluster string, taskArn string) error {
 	clusterInstance := state.FindClusterByName(cluster)
 
 	if clusterInstance.ARN == "" {
+		glog.Error("cluster doesn't exist")
 		return errors.New("cluster doesn't exist")
 	}
 
 	if clusterInstance.Status != "ACTIVE" {
+		glog.Error("the cluster is not active")
 		return errors.New("the cluster is not active")
 	}
 
 	instancesList := clusterInstance.ContainerInstances
-	fmt.Printf("Found %+v container instances in the cluster: \n\n", len(instancesList))
+	glog.V(3).Infoln("Found %+v container instances in the cluster: ", len(instancesList))
 
 	// TODO Register task definitions
 
@@ -62,7 +65,7 @@ func StartTask(cluster string, taskArn string) error {
 		return nil
 	}
 
-	fmt.Printf("How many instances lack the specific task %+v\n\n", len(chosenInstances))
+	glog.V(3).Infoln("How many instances lack the specific task %+v\n\n", len(chosenInstances))
 
 	params := &ecs.StartTaskInput{
 		ContainerInstances: chosenInstances,
@@ -73,11 +76,11 @@ func StartTask(cluster string, taskArn string) error {
 
 	resp, err := client.StartTask(params)
 	if err != nil {
-		fmt.Println(err.Error())
+		glog.Error(err.Error())
 		return err
 	}
 
-	fmt.Println(resp)
+	glog.V(2).Infoln(resp)
 	// TODO Add logger
 	// TODO Make it running as linux daemon
 	return nil

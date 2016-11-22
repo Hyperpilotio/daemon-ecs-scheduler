@@ -12,3 +12,4 @@ import:
 - package: github.com/Wen777/ecs_state
 - package: github.com/urfave/cli
   version: ~1.19.0
+- package: github.com/golang/glog
