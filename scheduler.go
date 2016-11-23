@@ -90,14 +90,20 @@ func StartTask(cluster string, taskDefinitions []string, awsRegion string) error
 
 		glog.V(2).Infoln(resp)
 
-		// TODO Make it running as linux daemon
 	}
 	return nil
 }
 
 // StartServer start a web server
-func StartServer(port string) error {
-	router := gin.Default()
+func StartServer(port string, mode string) error {
+	gin.SetMode(mode)
+
+	router := gin.New()
+
+	// Global middleware
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+
 	return router.Run(":" + port)
 }
 
@@ -139,20 +145,15 @@ func main() {
 	}
 
 	// Add sub-command
+	// Two parameters, the default value of port is 7777 and the default value of mode is `release`
 	app.Commands = []cli.Command{
 		{
 			Name:  "server",
 			Usage: "start a HTTP server. Default value is 8080.",
 
 			Action: func(c *cli.Context) (err error) {
-				var port string
-				if len(c.String(port)) > 0 {
-					port = c.String("port")
-				} else {
-					port = "8080"
-				}
 
-				err = StartServer(port)
+				err = StartServer(c.String("port"), c.String("mode"))
 				if err != nil {
 					return cli.NewExitError(err.Error(), 1)
 				}
@@ -160,7 +161,13 @@ func main() {
 			}, Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "port",
+					Value: "7777",
 					Usage: "The port of HTTP server",
+				},
+				cli.StringFlag{
+					Name:  "mode",
+					Value: "release",
+					Usage: "The mode of HTTP server. \"release\", \"debug\", and \"test\" mode.",
 				},
 			},
 		},
