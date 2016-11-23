@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/gin-gonic/gin"
 
 	"github.com/golang/glog"
 
@@ -94,6 +95,12 @@ func StartTask(cluster string, taskDefinitions []string, awsRegion string) error
 	return nil
 }
 
+// StartServer start a web server
+func StartServer(port string) error {
+	router := gin.Default()
+	return router.Run(":" + port)
+}
+
 func main() {
 
 	// Parse parameters from command line inpu
@@ -103,7 +110,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "daemon-ecs-scheduler"
 	app.Usage = "A daemon scheduler by hyperpilot for AWS ECS"
-
+	// Global flags
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "aws-region",
@@ -125,10 +132,39 @@ func main() {
 			taskDefinitions = c.StringSlice("task-definitions")
 			err := StartTask(cluster, taskDefinitions, awsRegion)
 			if err != nil {
-				return err
+				return cli.NewExitError(err.Error(), 1)
 			}
 		}
 		return nil
 	}
+
+	// Add sub-command
+	app.Commands = []cli.Command{
+		{
+			Name:  "server",
+			Usage: "start a HTTP server. Default value is 8080.",
+
+			Action: func(c *cli.Context) (err error) {
+				var port string
+				if len(c.String(port)) > 0 {
+					port = c.String("port")
+				} else {
+					port = "8080"
+				}
+
+				err = StartServer(port)
+				if err != nil {
+					return cli.NewExitError(err.Error(), 1)
+				}
+				return
+			}, Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "port",
+					Usage: "The port of HTTP server",
+				},
+			},
+		},
+	}
+
 	app.Run(os.Args)
 }
