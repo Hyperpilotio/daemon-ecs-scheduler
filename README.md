@@ -1,3 +1,5 @@
+![alt tag](https://travis-ci.org/Hyperpilotio/daemon-ecs-scheduler.svg?branch=master)
+
 # daemon-ecs-scheduler
 A ECS scheduler that places daemons on every node in ECS cluster
 
