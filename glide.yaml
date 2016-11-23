@@ -9,5 +9,5 @@ import:
 - package: github.com/urfave/cli
   version: ~1.19.0
 - package: github.com/golang/glog
-- package: gopkg.in/gin-gonic/gin.v1
+- package: github.com/gin-gonic/gin
   version: ~1.0.0
