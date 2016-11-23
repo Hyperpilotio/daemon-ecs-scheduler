@@ -13,6 +13,6 @@ imports:
   version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: github.com/Wen777/ecs_state
   version: c6b3d7fd30ef3716ca1ac7cf8e40d5cce09ee2cb
-- name: gopkg.in/gin-gonic/gin.v1
+- name: github.com/gin-gonic/gin
   version: 2dae550eb5392006a4582ce9c90016a9b5a74e8b
 testImports: []
