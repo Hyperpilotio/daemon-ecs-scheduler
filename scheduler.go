@@ -5,8 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
@@ -16,6 +14,31 @@ import (
 	ecs_state "github.com/Wen777/ecs_state"
 	cli "github.com/urfave/cli"
 )
+
+var (
+	// Sess session of aws
+	Sess *session.Session
+
+	// Client of aws
+	Client *ecs.ECS
+
+	// State instance of ecs_state
+	State ecs_state.StateOps
+
+	// Cluster the name of cluster
+	Cluster string
+)
+
+func initialize(cluster string, awsRegion string) {
+
+	Sess, _ = session.NewSession(&aws.Config{Region: aws.String(awsRegion)})
+	Client = ecs.New(Sess)
+	State = ecs_state.Initialize(cluster, Client)
+	State.RefreshClusterState()
+	State.RefreshContainerInstanceState()
+	State.RefreshTaskState()
+
+}
 
 // selectUnlaunchedInstances finds instances that has launched the specified task
 // instances all the instances in the cluster
@@ -38,19 +61,10 @@ func selectUnlaunchedInstances(instances []ecs_state.ContainerInstance, newTask 
 }
 
 // StartTask on AWS ECS Cluster
-// cluster the name of cluster
 // taskArn the ARN of task or the name of task
-func StartTask(cluster string, taskDefinitions []string, awsRegion string) error {
-	// List cluster info
-	sess, _ := session.NewSession(&aws.Config{Region: aws.String(awsRegion)})
-	client := ecs.New(sess)
-
-	state := ecs_state.Initialize(cluster, client)
-	state.RefreshClusterState()
-	state.RefreshContainerInstanceState()
-	state.RefreshTaskState()
-
-	clusterInstance := state.FindClusterByName(cluster)
+func StartTask(taskDefinitions []string) error {
+	// Cluster comes from global variable which is determined on the start of runtime of scheduler.
+	clusterInstance := State.FindClusterByName(Cluster)
 
 	if clusterInstance.ARN == "" {
 		glog.Error("cluster doesn't exist")
@@ -65,8 +79,6 @@ func StartTask(cluster string, taskDefinitions []string, awsRegion string) error
 	instances := clusterInstance.ContainerInstances
 	glog.V(3).Infoln("Found %+v container instances in the cluster: ", len(instances))
 
-	// TODO Register task definitions
-
 	// chosenInstances stores those instances who doesn't have the specific task
 	for _, task := range taskDefinitions {
 		chosenInstances := selectUnlaunchedInstances(instances, task)
@@ -79,41 +91,33 @@ func StartTask(cluster string, taskDefinitions []string, awsRegion string) error
 		params := &ecs.StartTaskInput{
 			ContainerInstances: chosenInstances,
 			TaskDefinition:     aws.String(task),
-			Cluster:            aws.String(cluster),
+			Cluster:            aws.String(Cluster),
 			StartedBy:          aws.String("daemon-ecs-scheduler"),
 		}
 
-		resp, err := client.StartTask(params)
+		resp, err := Client.StartTask(params)
+
+		glog.V(2).Infoln(resp)
+
+		if len(resp.Failures) != 0 {
+			glog.Warningf("[StartTask] %v", resp.Failures)
+		}
+
 		if err != nil {
 			glog.Error(err.Error())
 			return err
 		}
 
-		glog.V(2).Infoln(resp)
-
 	}
 	return nil
-}
-
-// StartServer start a web server
-func StartServer(port string, mode string) error {
-	gin.SetMode(mode)
-
-	router := gin.New()
-
-	// Global middleware
-	router.Use(gin.Logger())
-	router.Use(gin.Recovery())
-
-	return router.Run(":" + port)
 }
 
 func main() {
 
 	// Parse parameters from command line inpu
-	var cluster string
 	var awsRegion string
 	var taskDefinitions []string
+
 	app := cli.NewApp()
 	app.Name = "daemon-ecs-scheduler"
 	app.Usage = "A daemon scheduler by hyperpilot for AWS ECS"
@@ -127,7 +131,7 @@ func main() {
 		cli.StringFlag{
 			Name:        "cluster",
 			Usage:       "The name of target cluster",
-			Destination: &cluster,
+			Destination: &Cluster,
 		},
 		cli.StringSliceFlag{
 			Name:  "task-definitions, tasks",
@@ -135,12 +139,19 @@ func main() {
 		},
 	}
 	app.Action = func(c *cli.Context) error {
-		if c.String("cluster") != "" {
-			taskDefinitions = c.StringSlice("task-definitions")
-			err := StartTask(cluster, taskDefinitions, awsRegion)
-			if err != nil {
-				return cli.NewExitError(err.Error(), 1)
-			}
+		if Cluster == "" {
+			return cli.NewExitError("cluster does exit", 1)
+		}
+		taskDefinitions = c.StringSlice("task-definitions")
+		if len(taskDefinitions) == 0 {
+			return cli.NewExitError("no tasks", 1)
+		}
+
+		initialize(Cluster, awsRegion)
+
+		err := StartTask(taskDefinitions)
+		if err != nil {
+			return cli.NewExitError(err.Error(), 1)
 		}
 		return nil
 	}
@@ -152,13 +163,21 @@ func main() {
 			Name:  "server",
 			Usage: "start a HTTP server. Default value is 8080.",
 
-			Action: func(c *cli.Context) (err error) {
+			Action: func(c *cli.Context) error {
+				if Cluster == "" {
+					return cli.NewExitError("[server] cluster does exit", 1)
+				}
+				if awsRegion == "" {
+					return cli.NewExitError("[server] awsRegion is undefined", 1)
+				}
 
-				err = StartServer(c.String("port"), c.String("mode"))
+				initialize(Cluster, awsRegion)
+
+				err := StartServer(c.String("port"), c.String("mode"))
 				if err != nil {
 					return cli.NewExitError(err.Error(), 1)
 				}
-				return
+				return nil
 			}, Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "port",
@@ -173,6 +192,5 @@ func main() {
 			},
 		},
 	}
-
 	app.Run(os.Args)
 }
