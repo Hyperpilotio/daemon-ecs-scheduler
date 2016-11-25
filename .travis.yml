@@ -8,7 +8,6 @@ install:
 before_script:
 script:
   - glide install
-  - go get -u
   - go build .
   - go test $(glide novendor)
   - go vet .
