@@ -8,7 +8,7 @@ import (
 )
 
 // StartServer start a web server
-func StartServer(port int, mode string) error {
+func StartServer(port string, mode string) error {
 	gin.SetMode(mode)
 
 	router := gin.New()
@@ -26,7 +26,7 @@ func StartServer(port int, mode string) error {
 		daemonsGroup.DELETE(":taskARN", deleteDaemonHandler)
 	}
 
-	return router.Run(":" + string(port))
+	return router.Run(":" + port)
 }
 
 func getClusterInfo(c *gin.Context) {

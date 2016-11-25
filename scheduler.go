@@ -24,7 +24,7 @@ var (
 )
 
 // Run starts the scheduler
-func Run(port int, isDebug bool) error {
+func Run(port string, isDebug bool) error {
 	Sess, _ = session.NewSession(&aws.Config{Region: aws.String(AWSRegion)})
 	Client = ecs.New(Sess)
 	State = ecs_state.Initialize(Cluster, Client)
@@ -127,9 +127,9 @@ func main() {
 			Usage:       "The name of target cluster",
 			Destination: &Cluster,
 		},
-		cli.IntFlag{
+		cli.StringFlag{
 			Name:  "port",
-			Value: 7777,
+			Value: "7777",
 			Usage: "The port of scheduler REST server",
 		},
 		cli.BoolFlag{
@@ -144,8 +144,7 @@ func main() {
 		if AWSRegion == "" {
 			return cli.NewExitError("AWS Region is required", 1)
 		}
-		err := Run(c.Int("port"), c.Bool("mode"))
-		return err
+		return Run(c.String("port"), c.Bool("mode"))
 	}
 
 	app.Run(os.Args)
