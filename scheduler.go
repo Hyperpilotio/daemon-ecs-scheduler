@@ -16,26 +16,26 @@ import (
 )
 
 var (
-	// Sess session of aws
-	Sess *session.Session
-
-	// Client of aws
-	Client *ecs.ECS
-
-	// State instance of ecs_state
-	State ecs_state.StateOps
-
-	// Cluster the name of cluster
-	Cluster string
+	Sess      *session.Session   // Sess session of aws
+	Client    *ecs.ECS           // Client ECS Client
+	State     ecs_state.StateOps // State instance of ecs_state
+	Cluster   string             // Cluster the name of the ECS cluster
+	AWSRegion string             // AWSRegion AWS Region of the cluster
 )
 
-func initialize(cluster string, awsRegion string) {
-	Sess, _ = session.NewSession(&aws.Config{Region: aws.String(awsRegion)})
+// Run starts the scheduler
+func Run(port int, isDebug bool) error {
+	Sess, _ = session.NewSession(&aws.Config{Region: aws.String(AWSRegion)})
 	Client = ecs.New(Sess)
-	State = ecs_state.Initialize(cluster, Client)
+	State = ecs_state.Initialize(Cluster, Client)
 	State.RefreshClusterState()
 	State.RefreshContainerInstanceState()
 	State.RefreshTaskState()
+	var mode = "release"
+	if isDebug {
+		mode = "debug"
+	}
+	return StartServer(port, mode)
 }
 
 // selectUnlaunchedInstances finds instances that has launched the specified task
@@ -111,11 +111,7 @@ func StartTask(taskDefinitions []string) error {
 }
 
 func main() {
-
-	// Parse parameters from command line inpu
-	var awsRegion string
-	var taskDefinitions []string
-
+	// Parse parameters from command line input.
 	app := cli.NewApp()
 	app.Name = "daemon-ecs-scheduler"
 	app.Usage = "A daemon scheduler by hyperpilot for AWS ECS"
@@ -124,71 +120,33 @@ func main() {
 		cli.StringFlag{
 			Name:        "aws-region",
 			Usage:       "The targetted AWS region",
-			Destination: &awsRegion,
+			Destination: &AWSRegion,
 		},
 		cli.StringFlag{
 			Name:        "cluster",
 			Usage:       "The name of target cluster",
 			Destination: &Cluster,
 		},
-		cli.StringSliceFlag{
-			Name:  "task-definitions, tasks",
-			Usage: "Start which task. Format -tasks task_name -tasks another_task_name",
+		cli.IntFlag{
+			Name:  "port",
+			Value: 7777,
+			Usage: "The port of scheduler REST server",
+		},
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "Enable debug mode",
 		},
 	}
 	app.Action = func(c *cli.Context) error {
 		if Cluster == "" {
-			return cli.NewExitError("cluster does exit", 1)
+			return cli.NewExitError("Cluster name is required", 1)
 		}
-		taskDefinitions = c.StringSlice("task-definitions")
-		if len(taskDefinitions) == 0 {
-			return cli.NewExitError("no tasks", 1)
+		if AWSRegion == "" {
+			return cli.NewExitError("AWS Region is required", 1)
 		}
-
-		initialize(Cluster, awsRegion)
-
-		err := StartTask(taskDefinitions)
-		if err != nil {
-			return cli.NewExitError(err.Error(), 1)
-		}
-		return nil
+		err := Run(c.Int("port"), c.Bool("mode"))
+		return err
 	}
 
-	// Add sub-command
-	// Two parameters, the default value of port is 7777 and the default value of mode is `release`
-	app.Commands = []cli.Command{
-		{
-			Name:  "server",
-			Usage: "start a HTTP server. Default value is 8080.",
-
-			Action: func(c *cli.Context) error {
-				if Cluster == "" {
-					return cli.NewExitError("[server] cluster does exit", 1)
-				}
-				if awsRegion == "" {
-					return cli.NewExitError("[server] awsRegion is undefined", 1)
-				}
-
-				initialize(Cluster, awsRegion)
-
-				err := StartServer(c.String("port"), c.String("mode"))
-				if err != nil {
-					return cli.NewExitError(err.Error(), 1)
-				}
-				return nil
-			}, Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "port",
-					Value: "7777",
-					Usage: "The port of HTTP server",
-				},
-				cli.StringFlag{
-					Name:  "mode",
-					Value: "release",
-					Usage: "The mode of HTTP server. \"release\", \"debug\", and \"test\" mode.",
-				},
-			},
-		},
-	}
 	app.Run(os.Args)
 }
