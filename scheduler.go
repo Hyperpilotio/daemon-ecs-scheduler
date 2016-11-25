@@ -30,14 +30,12 @@ var (
 )
 
 func initialize(cluster string, awsRegion string) {
-
 	Sess, _ = session.NewSession(&aws.Config{Region: aws.String(awsRegion)})
 	Client = ecs.New(Sess)
 	State = ecs_state.Initialize(cluster, Client)
 	State.RefreshClusterState()
 	State.RefreshContainerInstanceState()
 	State.RefreshTaskState()
-
 }
 
 // selectUnlaunchedInstances finds instances that has launched the specified task

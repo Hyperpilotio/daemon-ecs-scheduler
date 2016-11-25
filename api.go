@@ -52,7 +52,7 @@ func postDaemonHandler(c *gin.Context) {
 		"error": false,
 	})
 
-	// TODO Implement the function that register a batch job to lunch task on each host every 5 mins
+	// TODO Implement the function that register a batch job to launch task on each host every 5 mins
 	err := StartTask([]string{taskDefinition})
 	if err != nil {
 		glog.Warningln(err.Error())
