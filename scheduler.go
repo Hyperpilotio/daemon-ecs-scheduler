@@ -12,6 +12,7 @@ import (
 	"github.com/golang/glog"
 
 	ecs_state "github.com/Wen777/ecs_state"
+	job "github.com/carlescere/scheduler"
 	cli "github.com/urfave/cli"
 )
 
@@ -21,6 +22,7 @@ var (
 	State     ecs_state.StateOps // State instance of ecs_state
 	Cluster   string             // Cluster the name of the ECS cluster
 	AWSRegion string             // AWSRegion AWS Region of the cluster
+	Interval  int                // Interval the time interval of ecs state refresh
 )
 
 // Run starts the scheduler
@@ -28,14 +30,19 @@ func Run(port string, isDebug bool) error {
 	Sess, _ = session.NewSession(&aws.Config{Region: aws.String(AWSRegion)})
 	Client = ecs.New(Sess)
 	State = ecs_state.Initialize(Cluster, Client)
-	State.RefreshClusterState()
-	State.RefreshContainerInstanceState()
-	State.RefreshTaskState()
+	job.Every(Interval).Minutes().Run(Refresh)
 	var mode = "release"
 	if isDebug {
 		mode = "debug"
 	}
 	return StartServer(port, mode)
+}
+
+// Refresh the cluster state
+func Refresh() {
+	State.RefreshClusterState()
+	State.RefreshContainerInstanceState()
+	State.RefreshTaskState()
 }
 
 // selectUnlaunchedInstances finds instances that has launched the specified task
@@ -135,6 +142,12 @@ func main() {
 		cli.BoolFlag{
 			Name:  "debug",
 			Usage: "Enable debug mode",
+		},
+		cli.IntFlag{
+			Name:        "interval",
+			Value:       5,
+			Usage:       "According to the given time interval (minutes) to refresh the cluster state.",
+			Destination: &Interval,
 		},
 	}
 	app.Action = func(c *cli.Context) error {

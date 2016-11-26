@@ -1,5 +1,5 @@
-hash: 25f3b746bea714fb1179d199c689702eaedaf556f5508f7c2da77699b2bbffce
-updated: 2016-11-24T23:21:10.735100776+08:00
+hash: c6d9cf7be6072e8c64c3d389a6657cad3e163d34fbc53483931f99f5cc1e3a42
+updated: 2016-11-25T16:13:43.981749854+08:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 898c81ba64b9a467379d35e3fabad133beae0ee4
@@ -31,6 +31,8 @@ imports:
   - service/ecs
   - service/ecs/ecsiface
   - service/sts
+- name: github.com/carlescere/scheduler
+  version: 5e2cc370dae40237c2a08b9181d4c84faf4150e9
 - name: github.com/gin-gonic/gin
   version: 2dae550eb5392006a4582ce9c90016a9b5a74e8b
   subpackages:

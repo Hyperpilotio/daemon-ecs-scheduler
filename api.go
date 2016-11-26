@@ -30,6 +30,7 @@ func StartServer(port string, mode string) error {
 }
 
 func getClusterInfo(c *gin.Context) {
+	Refresh()
 	res := State.FindClusterByName(Cluster)
 	c.JSON(http.StatusOK, gin.H{
 		"error": false,
